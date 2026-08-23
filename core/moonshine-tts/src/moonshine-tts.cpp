@@ -1111,8 +1111,9 @@ struct KokoroTtsEngine {
                                model_path_.string() + ")");
     }
     require_ort_model_bytes(model_buf, model_len, "Kokoro model");
+    int thread_count = std::thread::hardware_concurrency();
     Ort::SessionOptions session_opts =
-        make_ort_session_options(opt.ort_provider_names, opt.coreml_cache_dir);
+        make_ort_session_options(opt.ort_provider_names, opt.coreml_cache_dir, thread_count);
     session_ = Ort::Session(env_, model_buf, model_len, session_opts);
     model_fi.free();
     LOGF_IF(log_profiling_, "KokoroTtsEngine: model loaded (%zu bytes)",
@@ -1193,7 +1194,7 @@ struct KokoroTtsEngine {
 
   std::vector<float> synthesize(std::string_view text) {
     TIMER_START_IF(log_profiling_, kokoro_g2p);
-    const std::string ipa = g2p_->text_to_ipa(text, nullptr);
+    const std::string ipa = g2p_->text_to_ipa(std::string(text), nullptr);
     TIMER_END_IF(log_profiling_, kokoro_g2p);
     return synthesize_from_ipa(ipa);
   }

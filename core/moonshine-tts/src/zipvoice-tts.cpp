@@ -217,8 +217,9 @@ struct ZipVoiceTTS::Impl {
 
   Ort::Session load_session(std::string_view key, bool register_custom_ops,
                             const std::vector<std::string>& providers) {
+    int thread_count = std::thread::hardware_concurrency();
     Ort::SessionOptions opts =
-        make_ort_session_options(providers, coreml_cache_dir_);
+        make_ort_session_options(providers, coreml_cache_dir_, thread_count);
     if (register_custom_ops) {
       zipvoice_register_custom_ops(opts);
     }
@@ -281,7 +282,7 @@ struct ZipVoiceTTS::Impl {
   }
 
   std::vector<int64_t> ipa_text_to_token_ids(const std::string& text) {
-    const std::string ipa = g2p_->text_to_ipa(text, nullptr);
+    const std::string ipa = g2p_->text_to_ipa(std::string(text), nullptr);
     return ipa_to_token_ids(ipa);
   }
 

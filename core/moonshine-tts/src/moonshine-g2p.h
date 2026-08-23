@@ -42,7 +42,7 @@ class MoonshineG2P {
   MoonshineG2P(MoonshineG2P&&) noexcept;
   MoonshineG2P& operator=(MoonshineG2P&&) noexcept;
 
-  std::string text_to_ipa(std::string_view text,
+  std::string text_to_ipa(std::string text,
                           std::vector<G2pWordLog>* per_word_log = nullptr);
 
   bool uses_spanish_rules() const {

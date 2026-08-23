@@ -214,14 +214,14 @@ MoonshineG2P::MoonshineG2P(std::string dialect_id,
       "rule_based_g2p_dialect_catalog().");
 }
 
-std::string MoonshineG2P::text_to_ipa(std::string_view text,
+std::string MoonshineG2P::text_to_ipa(std::string text,
                                       std::vector<G2pWordLog>* per_word_log) {
   TIMER_START_IF(log_profiling_, g2p_text_to_ipa);
   if (rules_) {
-    std::string result = rules_->text_to_ipa(std::string(text), per_word_log);
     LOGF_IF(log_profiling_, "MoonshineG2P: text_to_ipa input='%.*s'%s",
             (int)std::min(text.size(), (size_t)200), text.data(),
             text.size() > 200 ? "..." : "");
+    std::string result = rules_->text_to_ipa(std::move(text), per_word_log);
     LOGF_IF(log_profiling_, "MoonshineG2P: text_to_ipa IPA output='%.*s'%s",
             (int)std::min(result.size(), (size_t)500), result.c_str(),
             result.size() > 500 ? "..." : "");

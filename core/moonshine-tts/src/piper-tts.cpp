@@ -639,8 +639,9 @@ struct PiperTTS::Impl {
     for (const auto& e : phoneme_id_map_) {
       phoneme_map_keys_.insert(e.first);
     }
+    int thread_count = std::thread::hardware_concurrency();
     Ort::SessionOptions session_opts =
-        make_ort_session_options(ort_provider_names_, coreml_cache_dir_);
+        make_ort_session_options(ort_provider_names_, coreml_cache_dir_, thread_count);
     split_weights_.clear();
     const auto oit = tts_asset_files_.entries.find(k_piper_onnx);
     if (oit == tts_asset_files_.entries.end() &&
@@ -756,7 +757,7 @@ struct PiperTTS::Impl {
   }
 
   std::vector<float> synthesize(std::string_view text) {
-    const std::string ipa = g2p_->text_to_ipa(text, nullptr);
+    const std::string ipa = g2p_->text_to_ipa(std::string(text), nullptr);
     return synthesize_from_ipa(ipa);
   }
 
