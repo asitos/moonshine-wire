@@ -15,4 +15,8 @@ oh and it was a kokoro.ort model error, the piper models work fine, but the koko
 
 i get it now, the cdn on hugging face serves new models with split paths, and the scripts are hardcoded to pull the previous monolithic models, i used the help of an llm to understand why this happened, and it helped by pulling a legacy .onnx model directly from thasspy and set up a venv, which converted the .ort to be processable by the c++ code.
 
+the split was made here: https://huggingface.co/moonshine-ai/moonshine-voice-assets/commit/5848cfcb3a09764eb1e49a763262668b86b941c1
+
 i will check if the issue is known to the maintainers or by some contributor
+
+it has not been fixed or being worked upon, i will open up a issue and pull request for it
