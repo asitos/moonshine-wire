@@ -12,3 +12,7 @@ Moonshine error: Unknown error
 update 2: it works, i removed the local folder and started again with a clean build, the tts works now, that took an hour
 
 oh and it was a kokoro.ort model error, the piper models work fine, but the kokoro ones are not pulled by the script?
+
+i get it now, the cdn on hugging face serves new models with split paths, and the scripts are hardcoded to pull the previous monolithic models, i used the help of an llm to understand why this happened, and it helped by pulling a legacy .onnx model directly from thasspy and set up a venv, which converted the .ort to be processable by the c++ code.
+
+i will check if the issue is known to the maintainers or by some contributor
