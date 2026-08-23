@@ -10,3 +10,5 @@ Moonshine error: Unknown error
 ```
 
 update 2: it works, i removed the local folder and started again with a clean build, the tts works now, that took an hour
+
+oh and it was a kokoro.ort model error, the piper models work fine, but the kokoro ones are not pulled by the script?
