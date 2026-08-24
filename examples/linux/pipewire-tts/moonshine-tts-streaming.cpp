@@ -481,11 +481,18 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  std::vector<std::pair<std::string, std::string>> tts_pairs;
+std::vector<std::pair<std::string, std::string>> tts_options;
+  std::vector<std::pair<std::string, std::string>> g2p_options;
   for (const auto& [k, v] : pairs) {
     if (k == "input-socket") input_sock = v;
     else if (k == "phoneme-socket") phoneme_sock = v;
-    else tts_pairs.emplace_back(k, v);
+    else if (k == "model-root") {
+      tts_options.emplace_back("g2p_root", v); // The C API uses g2p_root for both if no distinct TTS root is set
+      g2p_options.emplace_back("g2p_root", v);
+    }
+    else if (k == "lang") lang = v;
+    else if (k == "voice") tts_options.emplace_back(k, v);
+    else if (k == "speed") tts_options.emplace_back(k, v);
   }
 
   
@@ -499,8 +506,8 @@ int main(int argc, char *argv[]) {
 
   try {
     std::cout << "[Init] Loading Moonshine TTS engine...\n";
-    moonshine::TextToSpeech tts(lang, tts_pairs);
-    moonshine::GraphemeToPhonemizer g2p(lang, tts_pairs);
+    moonshine::TextToSpeech tts(lang, tts_options);
+    moonshine::GraphemeToPhonemizer g2p(lang, g2p_options);
 
     std::cout << "[Init] Warming up model...\n";
     moonshine::TtsSynthesisResult warmup = tts.synthesizeFromPhonemes(g2p.toIpa("hello"));
