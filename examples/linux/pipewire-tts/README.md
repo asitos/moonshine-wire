@@ -35,7 +35,7 @@ Start the daemon and point it to the downloaded Moonshine assets:
 
 ```bash
 ./moonshine-tts-streaming \
-    --model-root ../../c++/moonshine-voice/model \
+    --model-root ../../../core/moonshine-tts/data \
     --lang en_us \
     --voice kokoro_af_heart
 ```
