@@ -29,8 +29,7 @@
 #include <vector>
 #include <cmath>
 
-#include "moonshine-tts.h"
-#include "moonshine-g2p.h"
+#include "moonshine-cpp.h"
 
 static std::atomic<bool> g_shutdown{false};
 static void handleSignal(int) { g_shutdown.store(true, std::memory_order_relaxed); }
@@ -404,8 +403,8 @@ class TextSocketServer {
 
 class SynthesisWorker {
  public:
-  SynthesisWorker(moonshine_tts::MoonshineTTS &tts,
-                  moonshine_tts::MoonshineG2P &g2p,
+  SynthesisWorker(moonshine::TextToSpeech &tts,
+                  moonshine::GraphemeToPhonemizer &g2p,
                   ThreadSafeQueue<TextChunk> &queue,
                   AudioRing &ring,
                   LineSocketServer &phoneme_server)
@@ -426,16 +425,16 @@ class SynthesisWorker {
       uint64_t t_start = now_ms();
       
       // 1. Phoneme generation
-      std::string ipa = g2p_.text_to_ipa(std::move(chunk.text));
+      std::string ipa = g2p_.toIpa(chunk.text);
       phoneme_server_.broadcast(ipa);
       uint64_t t_phoneme = now_ms();
 
       // 2. TTS inference
-      std::vector<float> samples = tts_.synthesize_from_phonemes(ipa);
+      moonshine::TtsSynthesisResult res = tts_.synthesizeFromPhonemes(ipa);
       uint64_t t_infer = now_ms();
 
       // 3. Audio buffering
-      ring_.write(samples.data(), samples.size());
+      ring_.write(res.samples.data(), res.samples.size());
       uint64_t t_audio = now_ms();
 
       std::cout << "[TTFA] Text queued -> first PCM out: " << (t_audio - chunk.enqueue_time) << "ms "
@@ -443,8 +442,8 @@ class SynthesisWorker {
     }
   }
 
-  moonshine_tts::MoonshineTTS &tts_;
-  moonshine_tts::MoonshineG2P &g2p_;
+  moonshine::TextToSpeech &tts_;
+  moonshine::GraphemeToPhonemizer &g2p_;
   ThreadSafeQueue<TextChunk> &queue_;
   AudioRing &ring_;
   LineSocketServer &phoneme_server_;
@@ -489,16 +488,7 @@ int main(int argc, char *argv[]) {
     else tts_pairs.emplace_back(k, v);
   }
 
-  moonshine_tts::MoonshineTTSOptions opt;
-  bool lang_set = false;
-  try {
-    opt.parse_options(tts_pairs, &lang, &lang_set);
-  } catch (const std::exception& e) {
-    std::cerr << "Error: " << e.what() << '\n';
-    usage(argv[0]);
-    return 2;
-  }
-
+  
   struct sigaction sa = {};
   sa.sa_handler = handleSignal;
   ::sigaction(SIGINT,  &sa, nullptr);
@@ -509,14 +499,14 @@ int main(int argc, char *argv[]) {
 
   try {
     std::cout << "[Init] Loading Moonshine TTS engine...\n";
-    moonshine_tts::MoonshineTTS tts(lang, opt);
-    moonshine_tts::MoonshineG2P g2p(lang, opt.g2p_options);
+    moonshine::TextToSpeech tts(lang, tts_pairs);
+    moonshine::GraphemeToPhonemizer g2p(lang, tts_pairs);
 
     std::cout << "[Init] Warming up model...\n";
-    tts.synthesize_from_phonemes(g2p.text_to_ipa("hello"));
+    moonshine::TtsSynthesisResult warmup = tts.synthesizeFromPhonemes(g2p.toIpa("hello"));
 
     AudioRing ring;
-    PipeWireSink pw_sink(ring, moonshine_tts::MoonshineTTS::kSampleRateHz);
+    PipeWireSink pw_sink(ring, warmup.sampleRateHz);
     LineSocketServer phoneme_server(phoneme_sock);
     ThreadSafeQueue<TextChunk> text_queue;
     TextSocketServer text_server(input_sock, text_queue, ring);
